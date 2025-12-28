@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Passphrase Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Passphrase Generator</h1>
+      <p class="subtitle">Memorable, grammatically correct passphrases</p>
+    </header>
+
+    <div class="card">
+      <div class="passphrase-display">
+        <div class="passphrase" id="passphrase"></div>
+      </div>
+      <div class="meta" id="meta"></div>
+
+      <div class="controls">
+        <button class="btn-primary" id="generate">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9 9 0 0 0-9 9"/>
+            <path d="M3 12a9 9 0 0 0 9 9 9 9 0 0 0 9-9"/>
+            <path d="m16 8-4-4-4 4"/>
+          </svg>
+          Generate
+        </button>
+        <button class="btn-secondary" id="copy">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+          Copy
+        </button>
+      </div>
+
+      <div class="options">
+        <div class="option-group">
+          <label for="mode">Mode</label>
+          <select id="mode">
+            <option value="story">Story (grammatical sentences)</option>
+            <option value="alliterative">Alliterative (same letter)</option>
+            <option value="themed">Themed Scenes (contextual)</option>
+          </select>
+        </div>
+        <div class="option-group">
+          <label for="wordCount">Words</label>
+          <select id="wordCount">
+            <option value="4">4 words</option>
+            <option value="5">5 words</option>
+            <option value="6" selected>6 words</option>
+            <option value="7">7 words</option>
+            <option value="8">8 words</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="entropy-display">
+      <span class="entropy-label">Entropy</span>
+      <span class="entropy-value" id="entropy"></span>
+    </div>
+    <div class="entropy-bar">
+      <div class="entropy-fill" id="entropyFill"></div>
+    </div>
+
+    <p class="hint">Press <kbd>Space</kbd> to regenerate</p>
+
+    <div class="info">
+      <strong>How it works:</strong> Each phrase is a grammatically correct sentence 
+      with proper subject-verb agreement. Your brain remembers scenes, not random words.
+      Uses <code>crypto.getRandomValues()</code> for security.
+    </div>
+  </div>
+
+  <script src="words.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
