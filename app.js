@@ -1,5 +1,37 @@
 // Passphrase Generator - Application Logic
 
+// Pattern definitions for each word count
+// Format: array of { id, label, parts } where parts are 'adj', 'adv', 'noun', 'verb'
+const patterns = {
+  4: [
+    { id: 'anvn', label: 'adj-noun-verb-noun', parts: ['adj', 'noun', 'verb', 'noun'] },
+    { id: 'nvan', label: 'noun-verb-adj-noun', parts: ['noun', 'verb', 'adj', 'noun'] },
+    { id: 'navn', label: 'noun-adverb-verb-noun', parts: ['noun', 'adv', 'verb', 'noun'] }
+  ],
+  5: [
+    { id: 'anvan', label: 'adj-noun-verb-adj-noun', parts: ['adj', 'noun', 'verb', 'adj', 'noun'] },
+    { id: 'anavn', label: 'adj-noun-adv-verb-noun', parts: ['adj', 'noun', 'adv', 'verb', 'noun'] },
+    { id: 'aanvn', label: 'adj-adj-noun-verb-noun', parts: ['adj', 'adj', 'noun', 'verb', 'noun'] },
+    { id: 'nvaan', label: 'noun-verb-adj-adj-noun', parts: ['noun', 'verb', 'adj', 'adj', 'noun'] }
+  ],
+  6: [
+    { id: 'anavan', label: 'adj-noun-adv-verb-adj-noun', parts: ['adj', 'noun', 'adv', 'verb', 'adj', 'noun'] },
+    { id: 'aanvan', label: 'adj-adj-noun-verb-adj-noun', parts: ['adj', 'adj', 'noun', 'verb', 'adj', 'noun'] },
+    { id: 'anvaan', label: 'adj-noun-verb-adj-adj-noun', parts: ['adj', 'noun', 'verb', 'adj', 'adj', 'noun'] },
+    { id: 'navaan', label: 'noun-adv-verb-adj-adj-noun', parts: ['noun', 'adv', 'verb', 'adj', 'adj', 'noun'] }
+  ],
+  7: [
+    { id: 'aanavan', label: 'adj-adj-noun-adv-verb-adj-noun', parts: ['adj', 'adj', 'noun', 'adv', 'verb', 'adj', 'noun'] },
+    { id: 'anavaan', label: 'adj-noun-adv-verb-adj-adj-noun', parts: ['adj', 'noun', 'adv', 'verb', 'adj', 'adj', 'noun'] },
+    { id: 'aanvaan', label: 'adj-adj-noun-verb-adj-adj-noun', parts: ['adj', 'adj', 'noun', 'verb', 'adj', 'adj', 'noun'] }
+  ],
+  8: [
+    { id: 'aanavaan', label: 'adj-adj-noun-adv-verb-adj-adj-noun', parts: ['adj', 'adj', 'noun', 'adv', 'verb', 'adj', 'adj', 'noun'] },
+    { id: 'aaanvaan', label: 'adj-adj-adj-noun-verb-adj-adj-noun', parts: ['adj', 'adj', 'adj', 'noun', 'verb', 'adj', 'adj', 'noun'] },
+    { id: 'aanvaaan', label: 'adj-adj-noun-verb-adj-adj-adj-noun', parts: ['adj', 'adj', 'noun', 'verb', 'adj', 'adj', 'adj', 'noun'] }
+  ]
+};
+
 // Get cryptographically secure random number
 function secureRandom(max) {
   const array = new Uint32Array(1);
@@ -12,93 +44,103 @@ function pick(arr) {
   return arr[secureRandom(arr.length)];
 }
 
-// Build sentence based on word count
-// 4: adj noun verb noun
-// 5: adj noun adverb verb noun
-// 6: adj noun adverb verb adj noun
-// 7: adj adj noun adverb verb adj noun
-// 8: adj adj noun adverb verb adj adj noun
-function buildSentence(wordCount, adjectives, adverbs, nouns, verbs) {
+// Build sentence based on pattern array
+function buildSentenceFromPattern(patternParts, adjectives, adverbs, nouns, verbs) {
   const subjectPlural = secureRandom(2) === 1;
   const objectPlural = secureRandom(2) === 1;
   
   let parts = [];
   let entropy = 2; // 2 bits for plurality choices
   
-  // Subject adjective(s)
-  if (wordCount >= 7) {
-    // Two adjectives for subject
-    const adj1 = pick(adjectives);
-    const adj2 = pick(adjectives);
-    parts.push(adj1, adj2);
-    entropy += Math.log2(adjectives.length) * 2;
-  } else {
-    // One adjective for subject
-    const adj = pick(adjectives);
-    parts.push(adj);
-    entropy += Math.log2(adjectives.length);
-  }
+  // Track if we've hit the verb yet (to determine subject vs object)
+  let pastVerb = false;
+  let verbIndex = patternParts.indexOf('verb');
   
-  // Subject noun
-  const subjectNoun = pick(nouns);
-  parts.push(subjectPlural ? subjectNoun.p : subjectNoun.s);
-  entropy += Math.log2(nouns.length);
-  
-  // Adverb (for 5+ words)
-  if (wordCount >= 5) {
-    const adv = pick(adverbs);
-    parts.push(adv);
-    entropy += Math.log2(adverbs.length);
-  }
-  
-  // Verb
-  const verb = pick(verbs);
-  parts.push(subjectPlural ? verb.p : verb.s);
-  entropy += Math.log2(verbs.length);
-  
-  // Object adjective(s)
-  if (wordCount >= 6) {
-    if (wordCount >= 8) {
-      // Two adjectives for object
-      const adj1 = pick(adjectives);
-      const adj2 = pick(adjectives);
-      parts.push(adj1, adj2);
-      entropy += Math.log2(adjectives.length) * 2;
-    } else {
-      // One adjective for object
+  patternParts.forEach((partType, index) => {
+    if (partType === 'adj') {
       const adj = pick(adjectives);
       parts.push(adj);
       entropy += Math.log2(adjectives.length);
+    } else if (partType === 'adv') {
+      const adv = pick(adverbs);
+      parts.push(adv);
+      entropy += Math.log2(adverbs.length);
+    } else if (partType === 'noun') {
+      const noun = pick(nouns);
+      // Determine if this is subject or object noun
+      if (index < verbIndex) {
+        // Subject noun
+        parts.push(subjectPlural ? noun.p : noun.s);
+      } else {
+        // Object noun
+        parts.push(objectPlural ? noun.p : noun.s);
+      }
+      entropy += Math.log2(nouns.length);
+    } else if (partType === 'verb') {
+      const verb = pick(verbs);
+      parts.push(subjectPlural ? verb.p : verb.s);
+      entropy += Math.log2(verbs.length);
+      pastVerb = true;
     }
-  }
+  });
   
-  // Object noun
-  const objectNoun = pick(nouns);
-  parts.push(objectPlural ? objectNoun.p : objectNoun.s);
-  entropy += Math.log2(nouns.length);
-  
-  // Add article at the start based on plurality
+  // Add article at the start based on first element and plurality
   let phrase;
-  if (subjectPlural) {
-    phrase = parts.join(' ');
+  const firstNounIndex = patternParts.indexOf('noun');
+  
+  if (firstNounIndex === 0) {
+    // Starts with noun
+    if (subjectPlural) {
+      phrase = parts.join(' ');
+    } else {
+      phrase = 'the ' + parts.join(' ');
+    }
   } else {
-    phrase = 'the ' + parts.join(' ');
+    // Starts with adjective
+    if (subjectPlural) {
+      phrase = parts.join(' ');
+    } else {
+      phrase = 'the ' + parts.join(' ');
+    }
   }
   
   return { phrase, entropy, parts };
 }
 
+// Build sentence based on word count (legacy function for alliterative/themed modes)
+function buildSentence(wordCount, adjectives, adverbs, nouns, verbs) {
+  // Use default pattern for each word count
+  const defaultPatterns = {
+    4: ['adj', 'noun', 'verb', 'noun'],
+    5: ['adj', 'noun', 'adv', 'verb', 'noun'],
+    6: ['adj', 'noun', 'adv', 'verb', 'adj', 'noun'],
+    7: ['adj', 'adj', 'noun', 'adv', 'verb', 'adj', 'noun'],
+    8: ['adj', 'adj', 'noun', 'adv', 'verb', 'adj', 'adj', 'noun']
+  };
+  
+  return buildSentenceFromPattern(defaultPatterns[wordCount], adjectives, adverbs, nouns, verbs);
+}
+
 // Generate story mode passphrase
 function generateStory() {
   const wordCount = parseInt(document.getElementById('wordCount').value);
+  const patternSelect = document.getElementById('pattern');
+  const selectedPatternId = patternSelect.value;
   
-  return buildSentence(
-    wordCount,
+  // Find the selected pattern
+  const patternDef = patterns[wordCount].find(p => p.id === selectedPatternId) || patterns[wordCount][0];
+  
+  const result = buildSentenceFromPattern(
+    patternDef.parts,
     words.adjectives,
     words.adverbs,
     words.nouns,
     words.verbs
   );
+  
+  result.meta = patternDef.label;
+  
+  return result;
 }
 
 // Generate alliterative passphrase
@@ -145,6 +187,54 @@ function generateThemed() {
   return result;
 }
 
+// Generate minimal typing passphrase
+// Pattern: FourWordsInTitleCase1!
+function generateMinimal() {
+  const shortWords = words.short;
+  const targetMin = 15; // minimum characters before suffix
+  const targetMax = 20; // maximum characters before suffix
+  const suffix = "1!";
+  
+  let selectedWords = [];
+  let totalLength = 0;
+  let attempts = 0;
+  
+  // Try to hit 15-18 chars with 4 words
+  while (attempts < 50) {
+    selectedWords = [];
+    totalLength = 0;
+    
+    for (let i = 0; i < 4; i++) {
+      const word = pick(shortWords);
+      selectedWords.push(word);
+      totalLength += word.length;
+    }
+    
+    if (totalLength >= targetMin - 2 && totalLength <= targetMax) {
+      break;
+    }
+    attempts++;
+  }
+  
+  // Title case each word
+  const titleCased = selectedWords.map(w => 
+    w.charAt(0).toUpperCase() + w.slice(1)
+  );
+  
+  const phrase = titleCased.join('') + suffix;
+  const charCount = phrase.length;
+  
+  // Entropy: 4 words from short list
+  const entropy = 4 * Math.log2(shortWords.length);
+  
+  return {
+    phrase,
+    entropy,
+    parts: titleCased,
+    meta: `${charCount} characters`
+  };
+}
+
 // Main generate function
 function generatePassphrase() {
   const mode = document.getElementById('mode').value;
@@ -159,6 +249,9 @@ function generatePassphrase() {
       break;
     case 'themed':
       result = generateThemed();
+      break;
+    case 'minimal':
+      result = generateMinimal();
       break;
   }
   
@@ -245,12 +338,63 @@ function copyToClipboard() {
   });
 }
 
+// Populate pattern dropdown based on word count
+function updatePatternOptions() {
+  const wordCount = parseInt(document.getElementById('wordCount').value);
+  const patternSelect = document.getElementById('pattern');
+  const availablePatterns = patterns[wordCount] || [];
+  
+  // Clear existing options
+  patternSelect.innerHTML = '';
+  
+  // Add new options
+  availablePatterns.forEach((pattern, index) => {
+    const option = document.createElement('option');
+    option.value = pattern.id;
+    option.textContent = pattern.label;
+    if (index === 0) option.selected = true;
+    patternSelect.appendChild(option);
+  });
+}
+
+// Update UI visibility based on mode
+function updateUIForMode() {
+  const mode = document.getElementById('mode').value;
+  const wordCountGroup = document.getElementById('wordCountGroup');
+  const patternGroup = document.getElementById('patternGroup');
+  
+  if (mode === 'minimal') {
+    wordCountGroup.style.display = 'none';
+    patternGroup.style.display = 'none';
+  } else if (mode === 'story') {
+    wordCountGroup.style.display = 'flex';
+    patternGroup.style.display = 'flex';
+    updatePatternOptions();
+  } else {
+    wordCountGroup.style.display = 'flex';
+    patternGroup.style.display = 'none';
+  }
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('generate').addEventListener('click', generatePassphrase);
   document.getElementById('copy').addEventListener('click', copyToClipboard);
-  document.getElementById('mode').addEventListener('change', generatePassphrase);
-  document.getElementById('wordCount').addEventListener('change', generatePassphrase);
+  
+  document.getElementById('mode').addEventListener('change', () => {
+    updateUIForMode();
+    generatePassphrase();
+  });
+  
+  document.getElementById('wordCount').addEventListener('change', () => {
+    updatePatternOptions();
+    generatePassphrase();
+  });
+  
+  document.getElementById('pattern').addEventListener('change', generatePassphrase);
+  
+  // Initial UI setup
+  updateUIForMode();
   
   // Keyboard shortcut - spacebar to regenerate
   document.addEventListener('keydown', (e) => {

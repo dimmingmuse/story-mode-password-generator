@@ -176,6 +176,10 @@ button {
   gap: 1rem;
 }
 
+.options .option-group:nth-child(3) {
+  grid-column: 1 / -1;
+}
+
 .option-group {
   display: flex;
   flex-direction: column;
@@ -201,6 +205,11 @@ select {
   cursor: pointer;
   transition: border-color 0.15s ease;
   width: 100%;
+}
+
+#pattern {
+  font-size: 0.8125rem;
+  font-family: 'JetBrains Mono', monospace;
 }
 
 select:hover {

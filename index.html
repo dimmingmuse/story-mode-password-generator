@@ -45,18 +45,25 @@
           <label for="mode">Mode</label>
           <select id="mode">
             <option value="story">Story (grammatical sentences)</option>
+            <option value="minimal">Minimal Typing (TitleCase1!)</option>
             <option value="alliterative">Alliterative (same letter)</option>
             <option value="themed">Themed Scenes (contextual)</option>
           </select>
         </div>
-        <div class="option-group">
+        <div class="option-group" id="wordCountGroup">
           <label for="wordCount">Words</label>
           <select id="wordCount">
             <option value="4">4 words</option>
-            <option value="5">5 words</option>
-            <option value="6" selected>6 words</option>
+            <option value="5" selected>5 words</option>
+            <option value="6">6 words</option>
             <option value="7">7 words</option>
             <option value="8">8 words</option>
+          </select>
+        </div>
+        <div class="option-group" id="patternGroup">
+          <label for="pattern">Pattern</label>
+          <select id="pattern">
+            <!-- Populated dynamically based on word count -->
           </select>
         </div>
       </div>
@@ -73,8 +80,8 @@
     <p class="hint">Press <kbd>Space</kbd> to regenerate</p>
 
     <div class="info">
-      <strong>How it works:</strong> Each phrase is a grammatically correct sentence 
-      with proper subject-verb agreement. Your brain remembers scenes, not random words.
+      <strong>How it works:</strong> Each phrase is a grammatically correct sentence.
+      Your brain remembers scenes, not random words. Choose a pattern that sounds natural to you.
       Uses <code>crypto.getRandomValues()</code> for security.
     </div>
   </div>
